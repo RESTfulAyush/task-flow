@@ -6,7 +6,7 @@ import UserMenu from "./user-menu";
 import { PenBox } from "lucide-react";
 import Image from "next/image";
 import { checkUser } from "@/lib/checkUser";
-// import UserLoading from "./user-loading";
+import UserLoading from "./user-loading";
 
 async function Header() {
   await checkUser();
@@ -43,7 +43,7 @@ async function Header() {
         </div>
       </nav>
 
-      {/* <UserLoading /> */}
+      <UserLoading />
     </header>
   );
 }
