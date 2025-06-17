@@ -1,37 +1,52 @@
-// "use server";
+"use server";
 
-// import { db } from "@/lib/prisma";
-// import { auth } from "@clerk/nextjs/server";
+import { db } from "@/lib/prisma";
+import { auth } from "@clerk/nextjs/server";
 
-// export async function createSprint(projectId, data, organisationId) {
-//   const { userId } = auth();
-//   const orgId = organisationId;
+export async function createSprint(projectId, data, organisationId) {
+  const { userId } = auth();
+  const orgId = organisationId;
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+  if (!userId || !orgId) {
+    throw new Error("Unauthorized");
+  }
 
-//   const project = await db.project.findUnique({
-//     where: { id: projectId },
-//     include: { sprints: { orderBy: { createdAt: "desc" } } },
-//   });
+  const project = await db.project.findUnique({
+    where: { id: projectId },
+    include: { sprints: true },
+  });
 
-//   if (!project || project.organizationId !== orgId) {
-//     throw new Error("Project not found");
-//   }
+  if (!project || project.organizationId !== orgId) {
+    throw new Error("Project not found");
+  }
 
-//   const sprint = await db.sprint.create({
-//     data: {
-//       name: data.name,
-//       startDate: data.startDate,
-//       endDate: data.endDate,
-//       status: "PLANNED",
-//       projectId: projectId,
-//     },
-//   });
+  // Find the latest sprint number by name pattern (e.g., "PROJKEY-1")
+  const lastSprint = await db.sprint.findFirst({
+    where: { projectId },
+    orderBy: { createdAt: "desc" },
+  });
 
-//   return sprint;
-// }
+  let nextSprintNumber = 1;
+  if (lastSprint) {
+    const match = lastSprint.name.match(/-(\d+)$/); // matches the trailing number
+    if (match) {
+      nextSprintNumber = parseInt(match[1]) + 1;
+    }
+  }
+
+  const sprintName = `${project.key}-${nextSprintNumber}`;
+
+  const sprint = await db.sprint.create({
+    data: {
+      name: sprintName,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      status: "PLANNED",
+      projectId,
+    },
+  });
+  return sprint;
+}
 
 // export async function updateSprintStatus(sprintId, newStatus) {
 //   const { userId, orgId, orgRole } = auth();
