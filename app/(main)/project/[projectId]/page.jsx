@@ -6,11 +6,8 @@ import SprintBoard from "../_components/sprint-board";
 
 export default async function ProjectPage({ params }) {
   const { projectId } = params;
-  console.log('project id:',projectId)
 const { sessionClaims } = await auth();
 const orgId = sessionClaims?.o?.id;
-
-  console.log('orgIdddddd:',orgId)
 
   if (!orgId) {
     notFound(); // Could also throw error

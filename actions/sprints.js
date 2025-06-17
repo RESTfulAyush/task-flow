@@ -7,7 +7,6 @@
 //   const { userId } = auth();
 //   const orgId = organisationId;
 
-//   console.log("ayusjL:", orgId);
 //   if (!userId || !orgId) {
 //     throw new Error("Unauthorized");
 //   }
@@ -31,8 +30,6 @@
 //     },
 //   });
 
-//   console.log("orgIiiii:", organisationId);
-
 //   return sprint;
 // }
 
@@ -48,7 +45,6 @@
 //       where: { id: sprintId },
 //       include: { project: true },
 //     });
-//     console.log(sprint, orgRole);
 
 //     if (!sprint) {
 //       throw new Error("Sprint not found");

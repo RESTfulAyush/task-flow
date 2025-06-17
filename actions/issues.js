@@ -4,11 +4,9 @@
 // import { auth } from "@clerk/nextjs/server";
 
 // export async function getIssuesForSprint(sprintId, organisationId) {
-//   console.log("asfusf sprint id:", sprintId);
 //   const { userId } = auth();
 //   const orgId = organisationId;
 
-//   console.log("asfusf org id:", orgId);
 //   if (!userId || !orgId) {
 //     throw new Error("Unauthorized");
 //   }

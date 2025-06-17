@@ -39,7 +39,6 @@ export async function createProject(data) {
       },
     });
 
-    console.log("orgId:", orgId);
     return project;
   } catch (error) {
     throw new Error("Error creating project: " + error.message);
