@@ -46,14 +46,14 @@ export async function createProject(data) {
   }
 }
 
-export async function getProject(projectId) {
-  const { userId, orgId } = auth();
+// /actions/projects.ts
+export async function getProject(projectId, orgId) {
+  const { userId } = auth();
 
   if (!userId || !orgId) {
     throw new Error("Unauthorized");
   }
 
-  // Find user to verify existence
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
   });
@@ -62,7 +62,6 @@ export async function getProject(projectId) {
     throw new Error("User not found");
   }
 
-  // Get project with sprints and organization
   const project = await db.project.findUnique({
     where: { id: projectId },
     include: {
@@ -76,7 +75,6 @@ export async function getProject(projectId) {
     throw new Error("Project not found");
   }
 
-  // Verify project belongs to the organization
   if (project.organizationId !== orgId) {
     return null;
   }
@@ -84,14 +82,25 @@ export async function getProject(projectId) {
   return project;
 }
 
-export async function deleteProject(projectId) {
-  const { userId, orgId, orgRole } = auth();
+// actions/projects.js or .ts
+export async function deleteProject(projectId, orgId) {
+  const { userId } = auth();
 
   if (!userId || !orgId) {
     throw new Error("Unauthorized");
   }
 
-  if (orgRole !== "org:admin") {
+  // Optional: Fetch membership list to verify role server-side
+  const { data: membershipList } =
+    await clerkClient().organizations.getOrganizationMembershipList({
+      organizationId: orgId,
+    });
+
+  const userMembership = membershipList.find(
+    (m) => m.publicUserData.userId === userId
+  );
+
+  if (!userMembership || userMembership.role !== "org:admin") {
     throw new Error("Only organization admins can delete projects");
   }
 

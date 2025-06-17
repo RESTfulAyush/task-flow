@@ -9,19 +9,41 @@ const isProtectedRoute = createRouteMatcher([
   "/sprint(.*)",
 ]);
 
-export default clerkMiddleware((auth, req) => {
-  // if (!auth().userId && isProtectedRoute(req)) {
-  //   return auth().redirectToSignIn();
-  // }
-  // if (
-  //   auth().userId &&
-  //   !auth().orgId &&
-  //   req.nextUrl.pathname !== "/onboarding" &&
-  //   req.nextUrl.pathname !== "/"
-  // ) {
-  //   return NextResponse.redirect(new URL("/onboarding", req.url));
-  // }
+export default clerkMiddleware(async (auth, req) => {
+  const { userId, sessionClaims, redirectToSignIn, orgRole } = await auth();
+
+  if (!userId && isProtectedRoute(req)) {
+    return redirectToSignIn();
+  }
+
+  const orgId = sessionClaims?.o?.id;
+
+  console.log("user:", userId);
+  console.log("orgId:", orgId);
+  console.log("orgRole:", orgRole);
+  if (
+    userId &&
+    !orgId &&
+    req.nextUrl.pathname !== "/onboarding" &&
+    req.nextUrl.pathname !== "/"
+  ) {
+    return NextResponse.redirect(new URL("/onboarding", req.url));
+  }
 });
+
+// export default clerkMiddleware((auth, req) => {
+//   if (!auth().userId && isProtectedRoute(req)) {
+//     return auth().redirectToSignIn();
+//   }
+//   if (
+//     auth().userId &&
+//     !auth().orgId &&
+//     req.nextUrl.pathname !== "/onboarding" &&
+//     req.nextUrl.pathname !== "/"
+//   ) {
+//     return NextResponse.redirect(new URL("/onboarding", req.url));
+//   }
+// });
 
 export const config = {
   matcher: [

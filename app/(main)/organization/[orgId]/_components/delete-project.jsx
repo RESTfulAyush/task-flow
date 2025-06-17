@@ -20,10 +20,16 @@ export default function DeleteProject({ projectId }) {
   } = useFetch(deleteProject);
 
   const isAdmin = membership?.role === "org:admin";
+  const orgId = membership?.organization?.id;
 
   const handleDelete = async () => {
+    if (!orgId) {
+      alert("Organization not found");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this project?")) {
-      deleteProjectFn(projectId);
+      deleteProjectFn(projectId, orgId); // ✅ now passing orgId
     }
   };
 
