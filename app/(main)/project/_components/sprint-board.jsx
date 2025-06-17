@@ -1,159 +1,258 @@
-// "use server";
+// "use client";
 
-// import { db } from "@/lib/prisma";
-// import { auth } from "@clerk/nextjs/server";
+// import { useState, useEffect } from "react";
+// import { toast } from "sonner";
+// import { Plus } from "lucide-react";
+// import { Button } from "@/components/ui/button";
+// import { BarLoader } from "react-spinners";
+// import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
+// import useFetch from "@/hooks/use-fetch";
 
-// export async function getIssuesForSprint(sprintId) {
-//   const { userId } = auth();
+// import statuses from "@/data/status";
+// import { getIssuesForSprint, updateIssueOrder } from "@/actions/issues";
 
-//   if (!userId) {
-//     throw new Error("Unauthorized");
-//   }
+// import SprintManager from "./sprint-manager";
+// import IssueCreationDrawer from "./create-issue";
+// import IssueCard from "@/components/issue-card";
+// import BoardFilters from "./board-filters";
 
-//   const issues = await db.issue.findMany({
-//     where: { sprintId: sprintId },
-//     orderBy: [{ status: "asc" }, { order: "asc" }],
-//     include: {
-//       assignee: true,
-//       reporter: true,
-//     },
-//   });
+// function reorder(list, startIndex, endIndex) {
+//   const result = Array.from(list);
+//   const [removed] = result.splice(startIndex, 1);
+//   result.splice(endIndex, 0, removed);
 
-//   return issues;
+//   return result;
 // }
 
-// export async function createIssue(projectId, data) {
-//   const { userId, orgId } = auth();
+// export default function SprintBoard({ sprints, projectId, orgId }) {
+//   const [currentSprint, setCurrentSprint] = useState(
+//     sprints.find((spr) => spr.status === "ACTIVE") || sprints[0]
+//   );
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+//   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+//   const [selectedStatus, setSelectedStatus] = useState(null);
 
-//   let user = await db.user.findUnique({ where: { clerkUserId: userId } });
+//   const {
+//     loading: issuesLoading,
+//     error: issuesError,
+//     fn: fetchIssues,
+//     data: issues,
+//     setData: setIssues,
+//   } = useFetch(getIssuesForSprint);
 
-//   const lastIssue = await db.issue.findFirst({
-//     where: { projectId, status: data.status },
-//     orderBy: { order: "desc" },
-//   });
+//   const [filteredIssues, setFilteredIssues] = useState(issues);
 
-//   const newOrder = lastIssue ? lastIssue.order + 1 : 0;
+//   const handleFilterChange = (newFilteredIssues) => {
+//     setFilteredIssues(newFilteredIssues);
+//   };
 
-//   const issue = await db.issue.create({
-//     data: {
-//       title: data.title,
-//       description: data.description,
-//       status: data.status,
-//       priority: data.priority,
-//       projectId: projectId,
-//       sprintId: data.sprintId,
-//       reporterId: user.id,
-//       assigneeId: data.assigneeId || null, // Add this line
-//       order: newOrder,
-//     },
-//     include: {
-//       assignee: true,
-//       reporter: true,
-//     },
-//   });
+//   useEffect(() => {
+//     if (currentSprint.id) {
+//       fetchIssues(currentSprint.id);
+//     }
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [currentSprint.id]);
 
-//   return issue;
-// }
+//   const handleAddIssue = (status) => {
+//     setSelectedStatus(status);
+//     setIsDrawerOpen(true);
+//   };
 
-// export async function updateIssueOrder(updatedIssues) {
-//   const { userId, orgId } = auth();
+//   const handleIssueCreated = () => {
+//     fetchIssues(currentSprint.id);
+//   };
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+//   const {
+//     fn: updateIssueOrderFn,
+//     loading: updateIssuesLoading,
+//     error: updateIssuesError,
+//   } = useFetch(updateIssueOrder);
 
-//   // Start a transaction
-//   await db.$transaction(async (prisma) => {
-//     // Update each issue
-//     for (const issue of updatedIssues) {
-//       await prisma.issue.update({
-//         where: { id: issue.id },
-//         data: {
-//           status: issue.status,
-//           order: issue.order,
-//         },
+//   const onDragEnd = async (result) => {
+//     if (currentSprint.status === "PLANNED") {
+//       toast.warning("Start the sprint to update board");
+//       return;
+//     }
+//     if (currentSprint.status === "COMPLETED") {
+//       toast.warning("Cannot update board after sprint end");
+//       return;
+//     }
+//     const { destination, source } = result;
+
+//     if (!destination) {
+//       return;
+//     }
+
+//     if (
+//       destination.droppableId === source.droppableId &&
+//       destination.index === source.index
+//     ) {
+//       return;
+//     }
+
+//     const newOrderedData = [...issues];
+
+//     // source and destination list
+//     const sourceList = newOrderedData.filter(
+//       (list) => list.status === source.droppableId
+//     );
+
+//     const destinationList = newOrderedData.filter(
+//       (list) => list.status === destination.droppableId
+//     );
+
+//     if (source.droppableId === destination.droppableId) {
+//       const reorderedCards = reorder(
+//         sourceList,
+//         source.index,
+//         destination.index
+//       );
+
+//       reorderedCards.forEach((card, i) => {
+//         card.order = i;
+//       });
+//     } else {
+//       // remove card from the source list
+//       const [movedCard] = sourceList.splice(source.index, 1);
+
+//       // assign the new list id to the moved card
+//       movedCard.status = destination.droppableId;
+
+//       // add new card to the destination list
+//       destinationList.splice(destination.index, 0, movedCard);
+
+//       sourceList.forEach((card, i) => {
+//         card.order = i;
+//       });
+
+//       // update the order for each card in destination list
+//       destinationList.forEach((card, i) => {
+//         card.order = i;
 //       });
 //     }
-//   });
 
-//   return { success: true };
+//     const sortedIssues = newOrderedData.sort((a, b) => a.order - b.order);
+//     setIssues(newOrderedData, sortedIssues);
+
+//     updateIssueOrderFn(sortedIssues);
+//   };
+
+//   if (issuesError) return <div>Error loading issues</div>;
+
+//   return (
+//     <div className="flex flex-col">
+//       <SprintManager
+//         sprint={currentSprint}
+//         setSprint={setCurrentSprint}
+//         sprints={sprints}
+//         projectId={projectId}
+//       />
+
+//       {issues && !issuesLoading && (
+//         <BoardFilters issues={issues} onFilterChange={handleFilterChange} />
+//       )}
+
+//       {updateIssuesError && (
+//         <p className="text-red-500 mt-2">{updateIssuesError.message}</p>
+//       )}
+//       {(updateIssuesLoading || issuesLoading) && (
+//         <BarLoader className="mt-4" width={"100%"} color="#36d7b7" />
+//       )}
+
+//       <DragDropContext onDragEnd={onDragEnd}>
+//         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 bg-slate-900 p-4 rounded-lg">
+//           {statuses.map((column) => (
+//             <Droppable key={column.key} droppableId={column.key}>
+//               {(provided) => (
+//                 <div
+//                   {...provided.droppableProps}
+//                   ref={provided.innerRef}
+//                   className="space-y-2"
+//                 >
+//                   <h3 className="font-semibold mb-2 text-center">
+//                     {column.name}
+//                   </h3>
+//                   {filteredIssues
+//                     ?.filter((issue) => issue.status === column.key)
+//                     .map((issue, index) => (
+//                       <Draggable
+//                         key={issue.id}
+//                         draggableId={issue.id}
+//                         index={index}
+//                         isDragDisabled={updateIssuesLoading}
+//                       >
+//                         {(provided) => (
+//                           <div
+//                             ref={provided.innerRef}
+//                             {...provided.draggableProps}
+//                             {...provided.dragHandleProps}
+//                           >
+//                             <IssueCard
+//                               issue={issue}
+//                               onDelete={() => fetchIssues(currentSprint.id)}
+//                               onUpdate={(updated) =>
+//                                 setIssues((issues) =>
+//                                   issues.map((issue) => {
+//                                     if (issue.id === updated.id) return updated;
+//                                     return issue;
+//                                   })
+//                                 )
+//                               }
+//                             />
+//                           </div>
+//                         )}
+//                       </Draggable>
+//                     ))}
+//                   {provided.placeholder}
+//                   {column.key === "TODO" &&
+//                     currentSprint.status !== "COMPLETED" && (
+//                       <Button
+//                         variant="ghost"
+//                         className="w-full"
+//                         onClick={() => handleAddIssue(column.key)}
+//                       >
+//                         <Plus className="mr-2 h-4 w-4" />
+//                         Create Issue
+//                       </Button>
+//                     )}
+//                 </div>
+//               )}
+//             </Droppable>
+//           ))}
+//         </div>
+//       </DragDropContext>
+
+//       <IssueCreationDrawer
+//         isOpen={isDrawerOpen}
+//         onClose={() => setIsDrawerOpen(false)}
+//         sprintId={currentSprint.id}
+//         status={selectedStatus}
+//         projectId={projectId}
+//         onIssueCreated={handleIssueCreated}
+//         orgId={orgId}
+//       />
+//     </div>
+//   );
 // }
 
-// export async function deleteIssue(issueId) {
-//   const { userId, orgId } = auth();
+"use client"
+import { useState, useEffect } from "react";
+import SprintManager from "./sprint-manager";
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+const SprintBoard = ({sprints, projectId, orgId}) => {
+    const [currentSprint, setCurrentSprint] = useState(
+    sprints.find((spr) => spr.status === "ACTIVE") || sprints[0]
+  );
+  return (
+    <div>
+       <SprintManager
+        sprint={currentSprint}
+        setSprint={setCurrentSprint}
+        sprints={sprints}
+        projectId={projectId}
+      />
+    </div>
+  )
+}
 
-//   const user = await db.user.findUnique({
-//     where: { clerkUserId: userId },
-//   });
-
-//   if (!user) {
-//     throw new Error("User not found");
-//   }
-
-//   const issue = await db.issue.findUnique({
-//     where: { id: issueId },
-//     include: { project: true },
-//   });
-
-//   if (!issue) {
-//     throw new Error("Issue not found");
-//   }
-
-//   if (
-//     issue.reporterId !== user.id &&
-//     !issue.project.adminIds.includes(user.id)
-//   ) {
-//     throw new Error("You don't have permission to delete this issue");
-//   }
-
-//   await db.issue.delete({ where: { id: issueId } });
-
-//   return { success: true };
-// }
-
-// export async function updateIssue(issueId, data) {
-//   const { userId, orgId } = auth();
-
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
-
-//   try {
-//     const issue = await db.issue.findUnique({
-//       where: { id: issueId },
-//       include: { project: true },
-//     });
-
-//     if (!issue) {
-//       throw new Error("Issue not found");
-//     }
-
-//     if (issue.project.organizationId !== orgId) {
-//       throw new Error("Unauthorized");
-//     }
-
-//     const updatedIssue = await db.issue.update({
-//       where: { id: issueId },
-//       data: {
-//         status: data.status,
-//         priority: data.priority,
-//       },
-//       include: {
-//         assignee: true,
-//         reporter: true,
-//       },
-//     });
-
-//     return updatedIssue;
-//   } catch (error) {
-//     throw new Error("Error updating issue: " + error.message);
-//   }
-// }
+export default SprintBoard

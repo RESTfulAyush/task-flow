@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export async function createSprint(projectId, data, organisationId) {
   const { userId } = auth();
@@ -48,50 +48,68 @@ export async function createSprint(projectId, data, organisationId) {
   return sprint;
 }
 
-// export async function updateSprintStatus(sprintId, newStatus) {
-//   const { userId, orgId, orgRole } = auth();
+export async function updateSprintStatus(sprintId, newStatus, organisationId) {
+  const { userId } = auth(); // get userId only
+  const orgId = organisationId;
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
 
-//   try {
-//     const sprint = await db.sprint.findUnique({
-//       where: { id: sprintId },
-//       include: { project: true },
-//     });
+  if (!orgId) {
+    throw new Error("No Organization Provided");
+  }
 
-//     if (!sprint) {
-//       throw new Error("Sprint not found");
-//     }
+  // ✅ Fetch and verify admin role
+  const { data: membershipList } =
+    await clerkClient().organizations.getOrganizationMembershipList({
+      organizationId: orgId,
+    });
 
-//     if (sprint.project.organizationId !== orgId) {
-//       throw new Error("Unauthorized");
-//     }
+  const userMembership = membershipList.find(
+    (membership) => membership.publicUserData.userId === userId
+  );
 
-//     if (orgRole !== "org:admin") {
-//       throw new Error("Only Admin can make this change");
-//     }
+  if (!userMembership || userMembership.role !== "org:admin") {
+    throw new Error("Only organization admins can update sprint status");
+  }
 
-//     const now = new Date();
-//     const startDate = new Date(sprint.startDate);
-//     const endDate = new Date(sprint.endDate);
+  // ✅ Fetch sprint and validate org ownership
+  const sprint = await db.sprint.findUnique({
+    where: { id: sprintId },
+    include: { project: true },
+  });
 
-//     if (newStatus === "ACTIVE" && (now < startDate || now > endDate)) {
-//       throw new Error("Cannot start sprint outside of its date range");
-//     }
+  if (!sprint) {
+    throw new Error("Sprint not found");
+  }
 
-//     if (newStatus === "COMPLETED" && sprint.status !== "ACTIVE") {
-//       throw new Error("Can only complete an active sprint");
-//     }
+  if (sprint.project.organizationId !== orgId) {
+    throw new Error(
+      "Unauthorized: Sprint does not belong to your organization"
+    );
+  }
 
-//     const updatedSprint = await db.sprint.update({
-//       where: { id: sprintId },
-//       data: { status: newStatus },
-//     });
+  const now = new Date();
+  const startDate = new Date(sprint.startDate);
+  const endDate = new Date(sprint.endDate);
 
-//     return { success: true, sprint: updatedSprint };
-//   } catch (error) {
-//     throw new Error(error.message);
-//   }
-// }
+  if (newStatus === "ACTIVE" && (now < startDate || now > endDate)) {
+    throw new Error("Cannot start sprint outside of its date range");
+  }
+
+  if (newStatus === "COMPLETED" && sprint.status !== "ACTIVE") {
+    throw new Error("Can only complete an active sprint");
+  }
+
+  try {
+    const updatedSprint = await db.sprint.update({
+      where: { id: sprintId },
+      data: { status: newStatus },
+    });
+
+    return { success: true, sprint: updatedSprint };
+  } catch (error) {
+    throw new Error("Error updating sprint: " + error.message);
+  }
+}

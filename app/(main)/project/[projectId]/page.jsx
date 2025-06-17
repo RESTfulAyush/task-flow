@@ -2,7 +2,7 @@ import { getProject } from "@/actions/projects";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import SprintCreationForm from "../_components/create-sprint";
-// import SprintBoard from "../_components/sprint-board";
+import SprintBoard from "../_components/sprint-board";
 
 export default async function ProjectPage({ params }) {
   const { projectId } = params;
@@ -29,12 +29,11 @@ const orgId = sessionClaims?.o?.id;
       />
 
       {project.sprints.length > 0 ? (
-        <></>
-        // <SprintBoard
-        //   sprints={project.sprints}
-        //   projectId={projectId}
-        //   orgId={project.organizationId}
-        // />
+        <SprintBoard
+          sprints={project.sprints}
+          projectId={projectId}
+          orgId={project.organizationId}
+        />
       ) : (
         <div>Create a Sprint from button above</div>
       )}

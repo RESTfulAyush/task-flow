@@ -1,76 +1,80 @@
-// "use client";
+"use client";
 
-// import { useEffect, useState } from "react";
-// import { Button } from "@/components/ui/button";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
-// import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
-// import { BarLoader } from "react-spinners";
-// import { formatDistanceToNow, isAfter, isBefore, format } from "date-fns";
+import { useOrganization } from "@clerk/nextjs";
 
-// import useFetch from "@/hooks/use-fetch";
-// import { useRouter, useSearchParams } from "next/navigation";
+import { BarLoader } from "react-spinners";
+import { formatDistanceToNow, isAfter, isBefore, format } from "date-fns";
 
-// import { updateSprintStatus } from "@/actions/sprints";
+import useFetch from "@/hooks/use-fetch";
+import { useRouter, useSearchParams } from "next/navigation";
 
-// export default function SprintManager({
-//   sprint,
-//   setSprint,
-//   sprints,
-//   projectId,
-// }) {
-//   const [status, setStatus] = useState(sprint.status);
-//   const router = useRouter();
-//   const searchParams = useSearchParams();
+import { updateSprintStatus } from "@/actions/sprints";
 
-//   const {
-//     fn: updateStatus,
-//     loading,
-//     error,
-//     data: updatedStatus,
-//   } = useFetch(updateSprintStatus);
+export default function SprintManager({
+  sprint,
+  setSprint,
+  sprints,
+  projectId,
+}) {
+    const { membership } = useOrganization();
+  const orgId = membership?.organization?.id;
+  const [status, setStatus] = useState(sprint.status);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-//   const startDate = new Date(sprint.startDate);
-//   const endDate = new Date(sprint.endDate);
-//   const now = new Date();
+  const {
+    fn: updateStatus,
+    loading,
+    error,
+    data: updatedStatus,
+  } = useFetch(updateSprintStatus);
 
-//   const canStart =
-//     isBefore(now, endDate) && isAfter(now, startDate) && status === "PLANNED";
+  const startDate = new Date(sprint.startDate);
+  const endDate = new Date(sprint.endDate);
+  const now = new Date();
 
-//   const canEnd = status === "ACTIVE";
+  const canStart =
+    isBefore(now, endDate) && isAfter(now, startDate) && status === "PLANNED";
 
-//   const handleStatusChange = async (newStatus) => {
-//     updateStatus(sprint.id, newStatus);
-//   };
+  const canEnd = status === "ACTIVE";
 
-//   useEffect(() => {
-//     if (updatedStatus && updatedStatus.success) {
-//       setStatus(updatedStatus.sprint.status);
-//       setSprint({
-//         ...sprint,
-//         status: updatedStatus.sprint.status,
-//       });
-//     }
-//   }, [updatedStatus, loading]);
+  const handleStatusChange = async (newStatus) => {
+    updateStatus(sprint.id, newStatus, orgId);
+  };
 
-//   const getStatusText = () => {
-//     if (status === "COMPLETED") {
-//       return `Sprint Ended`;
-//     }
-//     if (status === "ACTIVE" && isAfter(now, endDate)) {
-//       return `Overdue by ${formatDistanceToNow(endDate)}`;
-//     }
-//     if (status === "PLANNED" && isBefore(now, startDate)) {
-//       return `Starts in ${formatDistanceToNow(startDate)}`;
-//     }
-//     return null;
-//   };
+  useEffect(() => {
+    if (updatedStatus && updatedStatus.success) {
+      setStatus(updatedStatus.sprint.status);
+      setSprint({
+        ...sprint,
+        status: updatedStatus.sprint.status,
+      });
+    }
+  }, [updatedStatus, loading]);
+
+  const getStatusText = () => {
+    if (status === "COMPLETED") {
+      return `Sprint Ended`;
+    }
+    if (status === "ACTIVE" && isAfter(now, endDate)) {
+      return `Overdue by ${formatDistanceToNow(endDate)}`;
+    }
+    if (status === "PLANNED" && isBefore(now, startDate)) {
+      return `Starts in ${formatDistanceToNow(startDate)}`;
+    }
+    return null;
+  };
 
 //   useEffect(() => {
 //     const sprintId = searchParams.get("sprint");
@@ -83,67 +87,55 @@
 //     }
 //   }, [searchParams, sprints]);
 
-//   const handleSprintChange = (value) => {
-//     const selectedSprint = sprints.find((s) => s.id === value);
-//     setSprint(selectedSprint);
-//     setStatus(selectedSprint.status);
-//     router.replace(`/project/${projectId}`, undefined, { shallow: true });
-//   };
+  const handleSprintChange = (value) => {
+    const selectedSprint = sprints.find((s) => s.id === value);
+    setSprint(selectedSprint);
+    setStatus(selectedSprint.status);
+    router.replace(`/project/${projectId}`, undefined, { shallow: true });
+  };
 
-//   return (
-//     <>
-//       <div className="flex justify-between items-center gap-4">
-//         <Select value={sprint.id} onValueChange={handleSprintChange}>
-//           <SelectTrigger className="bg-slate-950 self-start">
-//             <SelectValue placeholder="Select Sprint" />
-//           </SelectTrigger>
-//           <SelectContent>
-//             {sprints.map((sprint) => (
-//               <SelectItem key={sprint.id} value={sprint.id}>
-//                 {sprint.name} ({format(sprint.startDate, "MMM d, yyyy")} to{" "}
-//                 {format(sprint.endDate, "MMM d, yyyy")})
-//               </SelectItem>
-//             ))}
-//           </SelectContent>
-//         </Select>
-
-//         {canStart && (
-//           <Button
-//             onClick={() => handleStatusChange("ACTIVE")}
-//             disabled={loading}
-//             className="bg-green-900 text-white"
-//           >
-//             Start Sprint
-//           </Button>
-//         )}
-//         {canEnd && (
-//           <Button
-//             onClick={() => handleStatusChange("COMPLETED")}
-//             disabled={loading}
-//             variant="destructive"
-//           >
-//             End Sprint
-//           </Button>
-//         )}
-//       </div>
-//       {loading && <BarLoader width={"100%"} className="mt-2" color="#36d7b7" />}
-//       {getStatusText() && (
-//         <Badge variant="" className="mt-3 ml-1 self-start">
-//           {getStatusText()}
-//         </Badge>
-//       )}
-//     </>
-//   );
-// }
-
-import React from 'react'
-
-const SprintManager = () => {
   return (
-    <div>
-      SprintManager
-    </div>
-  )
-}
+    <>
+      <div className="flex justify-between items-center gap-4">
+        <Select value={sprint.id} onValueChange={handleSprintChange}>
+          <SelectTrigger className="bg-slate-950 self-start">
+            <SelectValue placeholder="Select Sprint" />
+          </SelectTrigger>
+          <SelectContent>
+            {sprints.map((sprint) => (
+              <SelectItem key={sprint.id} value={sprint.id}>
+                {sprint.name} ({format(sprint.startDate, "MMM d, yyyy")} to{" "}
+                {format(sprint.endDate, "MMM d, yyyy")})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-export default SprintManager
+        {canStart && (
+          <Button
+            onClick={() => handleStatusChange("ACTIVE")}
+            disabled={loading}
+            className="bg-green-900 text-white"
+          >
+            Start Sprint
+          </Button>
+        )}
+        {canEnd && (
+          <Button
+            onClick={() => handleStatusChange("COMPLETED")}
+            disabled={loading}
+            variant="destructive"
+          >
+            End Sprint
+          </Button>
+        )}
+      </div>
+      {loading && <BarLoader width={"100%"} className="mt-2" color="#36d7b7" />}
+      {getStatusText() && (
+        <Badge variant="" className="mt-3 ml-1 self-start">
+          {getStatusText()}
+        </Badge>
+      )}
+    </>
+  );
+}
