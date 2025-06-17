@@ -16,11 +16,11 @@ export const projectSchema = z.object({
     .optional(),
 });
 
-// export const sprintSchema = z.object({
-//   name: z.string().min(1, "Sprint name is required"),
-//   startDate: z.date(),
-//   endDate: z.date(),
-// });
+export const sprintSchema = z.object({
+  name: z.string().min(1, "Sprint name is required"),
+  startDate: z.date(),
+  endDate: z.date(),
+});
 
 // export const issueSchema = z.object({
 //   title: z.string().min(1, "Title is required"),

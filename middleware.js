@@ -18,9 +18,6 @@ export default clerkMiddleware(async (auth, req) => {
 
   const orgId = sessionClaims?.o?.id;
 
-  console.log("user:", userId);
-  console.log("orgId:", orgId);
-  console.log("orgRole:", orgRole);
   if (
     userId &&
     !orgId &&

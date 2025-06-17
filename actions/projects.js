@@ -1,7 +1,9 @@
 "use server";
 
+import NotFound from "@/app/not-found";
 import { db } from "@/lib/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 
 export async function createProject(data) {
   const { userId } = auth(); // Get only userId from auth()
@@ -39,7 +41,6 @@ export async function createProject(data) {
       },
     });
 
-    console.log("orgId:", orgId);
     return project;
   } catch (error) {
     throw new Error("Error creating project: " + error.message);
@@ -72,7 +73,7 @@ export async function getProject(projectId, orgId) {
   });
 
   if (!project) {
-    throw new Error("Project not found");
+    notFound();
   }
 
   if (project.organizationId !== orgId) {
