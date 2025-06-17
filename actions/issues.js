@@ -1,88 +1,90 @@
-// "use server";
+"use server";
 
-// import { db } from "@/lib/prisma";
-// import { auth } from "@clerk/nextjs/server";
+import { db } from "@/lib/prisma";
+import { auth } from "@clerk/nextjs/server";
 
-// export async function getIssuesForSprint(sprintId, organisationId) {
-//   const { userId } = auth();
-//   const orgId = organisationId;
+export async function getIssuesForSprint(sprintId, organisationId) {
+  const { userId } = auth();
+  const orgId = organisationId;
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+  if (!userId || !orgId) {
+    throw new Error("Unauthorized");
+  }
 
-//   const issues = await db.issue.findMany({
-//     where: { sprintId: sprintId },
-//     orderBy: [{ status: "asc" }, { order: "asc" }],
-//     include: {
-//       assignee: true,
-//       reporter: true,
-//     },
-//   });
+  const issues = await db.issue.findMany({
+    where: { sprintId: sprintId },
+    orderBy: [{ status: "asc" }, { order: "asc" }],
+    include: {
+      assignee: true,
+      reporter: true,
+    },
+  });
 
-//   return issues;
-// }
+  console.log("issuees:", issues);
+  console.log("orgIddddd:", orgId);
+  return issues;
+}
 
-// export async function createIssue(projectId, data) {
-//   const { userId, orgId } = auth();
+export async function createIssue(projectId, data, orgId) {
+  const { userId } = auth();
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+  if (!userId || !orgId) {
+    throw new Error("Unauthorized");
+  }
 
-//   let user = await db.user.findUnique({ where: { clerkUserId: userId } });
+  let user = await db.user.findUnique({ where: { clerkUserId: userId } });
 
-//   const lastIssue = await db.issue.findFirst({
-//     where: { projectId, status: data.status },
-//     orderBy: { order: "desc" },
-//   });
+  const lastIssue = await db.issue.findFirst({
+    where: { projectId, status: data.status },
+    orderBy: { order: "desc" },
+  });
 
-//   const newOrder = lastIssue ? lastIssue.order + 1 : 0;
+  const newOrder = lastIssue ? lastIssue.order + 1 : 0;
 
-//   const issue = await db.issue.create({
-//     data: {
-//       title: data.title,
-//       description: data.description,
-//       status: data.status,
-//       priority: data.priority,
-//       projectId: projectId,
-//       sprintId: data.sprintId,
-//       reporterId: user.id,
-//       assigneeId: data.assigneeId || null, // Add this line
-//       order: newOrder,
-//     },
-//     include: {
-//       assignee: true,
-//       reporter: true,
-//     },
-//   });
+  const issue = await db.issue.create({
+    data: {
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      priority: data.priority,
+      projectId: projectId,
+      sprintId: data.sprintId,
+      reporterId: user.id,
+      assigneeId: data.assigneeId || null, // Add this line
+      order: newOrder,
+    },
+    include: {
+      assignee: true,
+      reporter: true,
+    },
+  });
 
-//   return issue;
-// }
+  return issue;
+}
 
-// export async function updateIssueOrder(updatedIssues) {
-//   const { userId, orgId } = auth();
+export async function updateIssueOrder(updatedIssues, orgId) {
+  const { userId } = auth();
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+  if (!userId || !orgId) {
+    throw new Error("Unauthorized");
+  }
 
-//   // Start a transaction
-//   await db.$transaction(async (prisma) => {
-//     // Update each issue
-//     for (const issue of updatedIssues) {
-//       await prisma.issue.update({
-//         where: { id: issue.id },
-//         data: {
-//           status: issue.status,
-//           order: issue.order,
-//         },
-//       });
-//     }
-//   });
+  // Start a transaction
+  await db.$transaction(async (prisma) => {
+    // Update each issue
+    for (const issue of updatedIssues) {
+      await prisma.issue.update({
+        where: { id: issue.id },
+        data: {
+          status: issue.status,
+          order: issue.order,
+        },
+      });
+    }
+  });
 
-//   return { success: true };
-// }
+  return { success: true };
+}
 
 // export async function deleteIssue(issueId) {
 //   const { userId, orgId } = auth();

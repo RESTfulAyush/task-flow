@@ -133,3 +133,9 @@
   background-size: 30px 30px;
   /* animation: moveDots 10s linear infinite; */
 }
+
+.wmde-markdown ul {
+  list-style-type: disc;
+  padding-left: 15px !important;
+  color: white;
+}
