@@ -66,8 +66,8 @@ export async function getProjects(orgId) {
   return projects;
 }
 
-export async function getUserIssues(userId) {
-  const { orgId } = auth();
+export async function getUserIssues(userId, orgId) {
+  // const { orgId } = auth();
 
   if (!userId || !orgId) {
     throw new Error("No user id or organization id found");

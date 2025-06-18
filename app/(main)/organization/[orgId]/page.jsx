@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getOrganization } from "@/actions/organizations";
 import OrgSwitcher from "@/components/org-switcher";
 import ProjectList from "./_components/project-list";
-// import UserIssues from "./_components/user-issues";
+import UserIssues from "./_components/user-issues";
 
 export default async function OrganizationPage({ params }) {
   const { orgId } = params;
@@ -32,7 +32,7 @@ export default async function OrganizationPage({ params }) {
         <ProjectList orgId={organization.id} />
       </div>
       <div className="mt-8">
-        {/* <UserIssues userId={userId} /> */}
+        <UserIssues userId={userId} />
       </div>
     </div>
   );

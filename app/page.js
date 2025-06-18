@@ -85,7 +85,7 @@ export default function Home() {
               src={"/logo2.png"}
               alt="taskflow Logo"
               width={400}
-              height={80}
+              height={0}
               className="h-14 sm:h-24 w-auto object-contain"
             />
           </span>
