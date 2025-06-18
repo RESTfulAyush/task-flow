@@ -122,41 +122,41 @@ export async function updateIssueOrder(updatedIssues, orgId) {
 //   return { success: true };
 // }
 
-// export async function updateIssue(issueId, data) {
-//   const { userId, orgId } = auth();
+export async function updateIssue(issueId, data, orgId) {
+  const { userId } = auth();
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+  if (!userId || !orgId) {
+    throw new Error("Unauthorized");
+  }
 
-//   try {
-//     const issue = await db.issue.findUnique({
-//       where: { id: issueId },
-//       include: { project: true },
-//     });
+  try {
+    const issue = await db.issue.findUnique({
+      where: { id: issueId },
+      include: { project: true },
+    });
 
-//     if (!issue) {
-//       throw new Error("Issue not found");
-//     }
+    if (!issue) {
+      throw new Error("Issue not found");
+    }
 
-//     if (issue.project.organizationId !== orgId) {
-//       throw new Error("Unauthorized");
-//     }
+    if (issue.project.organizationId !== orgId) {
+      throw new Error("Unauthorized");
+    }
 
-//     const updatedIssue = await db.issue.update({
-//       where: { id: issueId },
-//       data: {
-//         status: data.status,
-//         priority: data.priority,
-//       },
-//       include: {
-//         assignee: true,
-//         reporter: true,
-//       },
-//     });
+    const updatedIssue = await db.issue.update({
+      where: { id: issueId },
+      data: {
+        status: data.status,
+        priority: data.priority,
+      },
+      include: {
+        assignee: true,
+        reporter: true,
+      },
+    });
 
-//     return updatedIssue;
-//   } catch (error) {
-//     throw new Error("Error updating issue: " + error.message);
-//   }
-// }
+    return updatedIssue;
+  } catch (error) {
+    throw new Error("Error updating issue: " + error.message);
+  }
+}

@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
-// import IssueDetailsDialog from "./issue-details-dialog";
+import IssueDetailsDialog from "./issue-details-dialog";
 import UserAvatar from "./user-avatar";
 import { useRouter } from "next/navigation";
 
