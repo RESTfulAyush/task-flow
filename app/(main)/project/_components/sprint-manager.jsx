@@ -76,16 +76,16 @@ export default function SprintManager({
     return null;
   };
 
-//   useEffect(() => {
-//     const sprintId = searchParams.get("sprint");
-//     if (sprintId && sprintId !== sprint.id) {
-//       const selectedSprint = sprints.find((s) => s.id === sprintId);
-//       if (selectedSprint) {
-//         setSprint(selectedSprint);
-//         setStatus(selectedSprint.status);
-//       }
-//     }
-//   }, [searchParams, sprints]);
+  useEffect(() => {
+    const sprintId = searchParams.get("sprint");
+    if (sprintId && sprintId !== sprint.id) {
+      const selectedSprint = sprints.find((s) => s.id === sprintId);
+      if (selectedSprint) {
+        setSprint(selectedSprint);
+        setStatus(selectedSprint.status);
+      }
+    }
+  }, [searchParams, sprints]);
 
   const handleSprintChange = (value) => {
     const selectedSprint = sprints.find((s) => s.id === value);

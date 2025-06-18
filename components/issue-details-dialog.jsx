@@ -60,7 +60,7 @@ export default function IssueDetailsDialog({
 
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this issue?")) {
-      deleteIssueFn(issue.id);
+      deleteIssueFn(issue.id, orgId);
     }
   };
 

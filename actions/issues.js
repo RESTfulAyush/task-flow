@@ -19,9 +19,6 @@ export async function getIssuesForSprint(sprintId, organisationId) {
       reporter: true,
     },
   });
-
-  console.log("issuees:", issues);
-  console.log("orgIddddd:", orgId);
   return issues;
 }
 
@@ -86,41 +83,41 @@ export async function updateIssueOrder(updatedIssues, orgId) {
   return { success: true };
 }
 
-// export async function deleteIssue(issueId) {
-//   const { userId, orgId } = auth();
+export async function deleteIssue(issueId, orgId) {
+  const { userId } = auth();
 
-//   if (!userId || !orgId) {
-//     throw new Error("Unauthorized");
-//   }
+  if (!userId || !orgId) {
+    throw new Error("Unauthorized");
+  }
 
-//   const user = await db.user.findUnique({
-//     where: { clerkUserId: userId },
-//   });
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
+  });
 
-//   if (!user) {
-//     throw new Error("User not found");
-//   }
+  if (!user) {
+    throw new Error("User not found");
+  }
 
-//   const issue = await db.issue.findUnique({
-//     where: { id: issueId },
-//     include: { project: true },
-//   });
+  const issue = await db.issue.findUnique({
+    where: { id: issueId },
+    include: { project: true },
+  });
 
-//   if (!issue) {
-//     throw new Error("Issue not found");
-//   }
+  if (!issue) {
+    throw new Error("Issue not found");
+  }
 
-//   if (
-//     issue.reporterId !== user.id &&
-//     !issue.project.adminIds.includes(user.id)
-//   ) {
-//     throw new Error("You don't have permission to delete this issue");
-//   }
+  if (
+    issue.reporterId !== user.id &&
+    !issue.project.adminIds.includes(user.id)
+  ) {
+    throw new Error("You don't have permission to delete this issue");
+  }
 
-//   await db.issue.delete({ where: { id: issueId } });
+  await db.issue.delete({ where: { id: issueId } });
 
-//   return { success: true };
-// }
+  return { success: true };
+}
 
 export async function updateIssue(issueId, data, orgId) {
   const { userId } = auth();
